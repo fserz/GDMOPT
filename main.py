@@ -32,9 +32,11 @@ def get_args():
     # 添加随机种子参数，默认值为1
     parser.add_argument('--seed', type=int, default=1)
     # 添加缓冲区大小参数，默认值为1e6（100万）
-    parser.add_argument('--buffer-size', type=int, default=1e6)#1e6
+    # parser.add_argument('--buffer-size', type=int, default=1e6)#1e6
+    parser.add_argument('--buffer-size', type=int, default=3000)#1e6
     # 添加训练周期数参数，默认值为1e6（100万）
-    parser.add_argument('-e', '--epoch', type=int, default=1e6)# 1000
+    # parser.add_argument('-e', '--epoch', type=int, default=1e6)# 1000
+    parser.add_argument('-e', '--epoch', type=int, default=3000)# 1000
     # 添加每个周期的步数参数，默认值为1
     parser.add_argument('--step-per-epoch', type=int, default=1)# 100
     # 添加每次收集的步数参数，默认值为1
@@ -75,9 +77,11 @@ def get_args():
 
     # for diffusion
     # 添加演员学习率参数，默认值为1e-4
-    parser.add_argument('--actor-lr', type=float, default=1e-4)
+    # parser.add_argument('--actor-lr', type=float, default=1e-4)
+    parser.add_argument('--actor-lr', type=float, default=1e-2)
     # 添加评论家学习率参数，默认值为1e-4
-    parser.add_argument('--critic-lr', type=float, default=1e-4)
+    # parser.add_argument('--critic-lr', type=float, default=1e-4)
+    parser.add_argument('--critic-lr', type=float, default=1e-2)
     # 添加软更新参数tau，默认值为0.005
     parser.add_argument('--tau', type=float, default=0.005)  # for soft update
     # adjust

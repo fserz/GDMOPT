@@ -141,7 +141,6 @@ def rayleigh_channel_gain(ex, sta):
 #
 # # # Function to allocate load based on given transmission rates
 # def allocate_load(transmission_rates, total_load):
-#     # 按从高到低的顺序排列传输速率
 #     n_channels = len(transmission_rates)
 #     # 初始化一个大小为通道数的零数组，用于存储每个通道的负载分配
 #     load_allocation = np.zeros(n_channels)
@@ -182,6 +181,78 @@ def rayleigh_channel_gain(ex, sta):
 #     # 返回专家动作、总数据速率和次优专家动作
 #     return expert_action, sumdata_rate, subopt_expert_action
 
+# ==============================原来的对比算法==========================
+# 和之前结果一样
+# def CompUtility(State, Aution):
+#     actions = torch.from_numpy(np.array(Aution)).float()
+#     actions = torch.abs(actions)
+#     Aution = actions.numpy()
+#     # 总负载
+#     total_load = 1305
+#     normalized_weights = Aution / np.sum(Aution)
+#     # 实际分到的负载
+#     load_allocation = normalized_weights * total_load
+#
+#     g_n = State
+#     SNR = g_n * load_allocation
+#     data_rate = np.log2(1 + SNR)
+#
+#     expert_action, sumdata_rate, subopt_expert_action = allocate_load(g_n, total_load)
+#
+#     reward = np.sum(data_rate) - sumdata_rate
+#
+#     return reward, expert_action, subopt_expert_action, Aution
+#
+# # Function to allocate load based on given transmission rates
+# def allocate_load(transmission_rates, total_load):
+#     n_channels = len(transmission_rates)
+#     # 初始化一个大小为通道数的零数组，用于存储每个通道的负载分配
+#     load_allocation = np.zeros(n_channels)
+#     # 获取按传输速率从高到低排序的索引
+#     sorted_indices = np.argsort(transmission_rates)[::-1]
+#     # 按从高到低的顺序排列传输速率
+#     sorted_rates = transmission_rates[sorted_indices]
+#
+#     # 初始化二分查找的上下界
+#     L = 0
+#     U = total_load / min(sorted_rates)
+#     # 设置二分查找的精度
+#     precision = 1e-6
+#
+#     # 当上下界的差值大于精度时继续二分查找
+#     while U - L > precision:
+#         alpha = (L + U) / 2
+#         tentative_allocation = np.minimum(total_load, alpha * sorted_rates)
+#         total_allocated_load = np.sum(tentative_allocation)
+#
+#         if total_allocated_load < total_load:
+#             L = alpha
+#         else:
+#             U = alpha
+#
+#     load_allocation[sorted_indices] = np.minimum(total_load, alpha * sorted_rates)
+#
+#     # Calculate data rate
+#     SNR = transmission_rates * load_allocation
+#     data_rate = np.log2(1 + SNR)
+#     sumdata_rate = np.sum(data_rate)
+#
+#     # Generate expert action and suboptimal expert action
+#     expert_action = load_allocation / total_load
+#     subopt_expert_action = load_allocation / total_load + np.random.normal(0, 0.1, len(load_allocation))
+#
+#     # 返回专家动作、总数据速率和次优专家动作
+#     return expert_action, sumdata_rate, subopt_expert_action
+#
+# # Function to allocate load based on random transmission rates
+# def allocate_load_random(total_load, num_channels=5, rate_range=(10, 30)):
+#     # 随机生成传输速率
+#     transmission_rates = np.random.uniform(rate_range[0], rate_range[1], num_channels)
+#     return allocate_load(transmission_rates, total_load)
+
+# ==================================================================
+
+#
 # # ======================================新的我们的算法================================
 # def CompUtility(State, Aution):
 #     # 转换动作为张量并取绝对值
@@ -294,11 +365,11 @@ def rayleigh_channel_gain(ex, sta):
 #
 #     # 返回奖励、专家动作、次优专家动作以及归一化后的动作。
 #     return reward, expert_action, subopt_expert_action, Aution
-
-# total_load：总负载。
+#
+# # total_load：总负载。
 # def allocate_load(total_load):
 #     # 随机生成传输速率
-#     transmission_rates = np.random.uniform(10, 60, 5)
+#     transmission_rates = np.random.uniform(60, 100, 5)
 #
 #     # 初始化和排序,初始化负载分配并对传输速率进行降序排序
 #     n_channels = len(transmission_rates)
@@ -340,7 +411,72 @@ def rayleigh_channel_gain(ex, sta):
 
 
 # ============================================随机生成一条信道速率传输===========================
+# def CompUtility(State, Aution):
+#     # 转换动作为张量并取绝对值
+#     actions = torch.from_numpy(np.array(Aution)).float()
+#     actions = torch.abs(actions)
+#     Aution = actions.numpy()
+#     # 计算归一化权重并分配负载
+#     total_load = 1305
+#     normalized_weights = Aution / np.sum(Aution)
+#     load_allocation = normalized_weights * total_load
+#
+#     # 计算信噪比 (SNR) 和数据速率
+#     g_n = State
+#     SNR = g_n * load_allocation
+#     data_rate = np.log2(1 + SNR)
+#
+#     # 使用随机生成的单个信道传输速率而不是固定的传输速率
+#     # 调用 allocate_load 函数计算专家策略
+#     expert_action, expert_data_rate, subopt_expert_action = allocate_load(total_load)
+#
+#     # 计算奖励, 奖励定义为动态分配策略的数据速率之和减去专家策略的数据速率
+#     reward = np.sum(data_rate) - expert_data_rate
+#
+#     # ****************************************
+#     # # 计算总时延
+#     # total_data_rate = np.sum(data_rate)
+#     # total_delay = total_load / total_data_rate
+#     #
+#     # # 输出负载分配和总时延
+#     # print("Load Allocation:", load_allocation)
+#     # print("Total Delay:", total_delay)
+#     # ****************************************
+#
+#     # 返回奖励、专家动作、次优专家动作以及归一化后的动作。
+#     return reward, expert_action, subopt_expert_action, Aution
+
+# total_load：总负载。
+# def allocate_load(total_load):
+#     # 随机生成一个信道的传输速率
+#     transmission_rate = np.random.uniform(10, 20, 1)[0]
+#
+#     # 初始化负载分配
+#     load_allocation = np.zeros(1)
+#
+#     # 直接分配所有负载到这个单一信道
+#     load_allocation[0] = total_load
+#
+#     # 计算信噪比和数据速率
+#     SNR = transmission_rate * load_allocation
+#     data_rate = np.log2(1 + SNR)
+#     sum_data_rate = np.sum(data_rate)
+#
+#     # 计算专家动作和次优专家动作：
+#     # 专家动作是负载分配归一化结果，次优专家动作是在专家动作上加上一个高斯噪声。
+#     expert_action = load_allocation / total_load
+#     subopt_expert_action = load_allocation / total_load + np.random.normal(0, 0.1, len(load_allocation))
+#
+#     # 返回专家动作、总数据速率和次优专家动作。
+#     return expert_action, sum_data_rate, subopt_expert_action
+#
+# # ==============================轮询=======================================
+# 定义全局变量，用于记录上次选择的信道索引
+last_channel_index = 0
+
 def CompUtility(State, Aution):
+    global last_channel_index
+
     # 转换动作为张量并取绝对值
     actions = torch.from_numpy(np.array(Aution)).float()
     actions = torch.abs(actions)
@@ -355,14 +491,19 @@ def CompUtility(State, Aution):
     SNR = g_n * load_allocation
     data_rate = np.log2(1 + SNR)
 
-    # 使用随机生成的单个信道传输速率而不是固定的传输速率
-    # 调用 allocate_load 函数计算专家策略
-    expert_action, expert_data_rate, subopt_expert_action = allocate_load(total_load)
+    # 使用传输速率而不是信道增益
+    # 获取下一个信道的传输速率
+    transmission_rates = np.array([60, 40, 10, 20, 30])
+    channel_index = last_channel_index % len(transmission_rates)
+    expert_action, expert_data_rate, subopt_expert_action = allocate_load(transmission_rates[channel_index], total_load)
 
     # 计算奖励, 奖励定义为动态分配策略的数据速率之和减去专家策略的数据速率
     reward = np.sum(data_rate) - expert_data_rate
 
-    # ****************************************
+    # 更新上次选择的信道索引
+    last_channel_index += 1
+
+    # # ****************************************
     # # 计算总时延
     # total_data_rate = np.sum(data_rate)
     # total_delay = total_load / total_data_rate
@@ -370,36 +511,28 @@ def CompUtility(State, Aution):
     # # 输出负载分配和总时延
     # print("Load Allocation:", load_allocation)
     # print("Total Delay:", total_delay)
-    # ****************************************
+    # # ****************************************
 
     # 返回奖励、专家动作、次优专家动作以及归一化后的动作。
     return reward, expert_action, subopt_expert_action, Aution
 
-# total_load：总负载。
-def allocate_load(total_load):
-    # 随机生成一个信道的传输速率
-    transmission_rate = np.random.uniform(10, 60, 1)[0]
-
-    # 初始化负载分配
+# 返回一个或多个信道传输速率,总载荷
+def allocate_load(transmission_rate, total_load):
+    # 初始化分配载荷
     load_allocation = np.zeros(1)
-
-    # 直接分配所有负载到这个单一信道
     load_allocation[0] = total_load
 
-    # 计算信噪比和数据速率
+    # 计算SNR和数据率
     SNR = transmission_rate * load_allocation
     data_rate = np.log2(1 + SNR)
     sum_data_rate = np.sum(data_rate)
 
-    # 计算专家动作和次优专家动作：
-    # 专家动作是负载分配归一化结果，次优专家动作是在专家动作上加上一个高斯噪声。
+    # 计算专家动作和次优专家动作
     expert_action = load_allocation / total_load
-    subopt_expert_action = load_allocation / total_load + np.random.normal(0, 0.1, len(load_allocation))
+    subopt_expert_action = expert_action + np.random.normal(0, 0.1, len(load_allocation))
 
-    # 返回专家动作、总数据速率和次优专家动作。
+    # 返回专家动作、总数据速率和次优专家动作
     return expert_action, sum_data_rate, subopt_expert_action
-
-
 
 
 # # Example usage
