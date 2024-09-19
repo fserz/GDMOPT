@@ -6,3 +6,4 @@
 # log\default\diffusion\Jul04-002415 轮询五个信道
 # log\default\diffusion\Jul05-232121 之前那一版随机对比
 # log\default\diffusion\Jul06-110544 调整随机生成5个信道速率值范围 transmission_rates = np.random.uniform(60, 100, 5)
+#
